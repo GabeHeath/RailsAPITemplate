@@ -5,6 +5,7 @@ Rails.application.routes.draw do
       post 'confirm'
       post 'login'
       post 'email_update'
+      post 'status'
     end
   end
 

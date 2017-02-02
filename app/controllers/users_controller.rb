@@ -1,5 +1,10 @@
 class UsersController < ApplicationController
   before_action :validate_email_update, only: :update
+  before_filter :authenticate_request!, only: :status
+
+  def status
+    render json: {'logged_in' => true, 'test' => @current_user }
+  end
 
   def create
     user = User.new(user_params)
@@ -78,7 +83,7 @@ def validate_email_update
   end
 
   if User.email_used?(@new_email)
-    return render json: { error: 'Email is already in use.'] }, status: :unprocessable_entity
+    return render json: { error: 'Email is already in use.' }, status: :unprocessable_entity
   end
 end
 end
