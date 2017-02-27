@@ -1,4 +1,4 @@
-class ApplicationController < ActionController::API
+class ApplicationController < ActionController::Base
   require 'json_web_token'
 
   protected
@@ -14,7 +14,7 @@ class ApplicationController < ActionController::API
 
   # Returns 401 response. To handle malformed / invalid requests.
   def invalid_authentication
-    render json: {error: 'Invalid Request'}, status: :unauthorized
+    render json: {errors: ['Invalid Request']}, status: :unauthorized
   end
 
   private

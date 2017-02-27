@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>API Template</title>
+  <%= stylesheet_link_tag    'application', media: 'all' %>
+  <%= csrf_meta_tags %>
+</head>
+
+<body>
+
+<% flash.each do |name, msg| %>
+    <%= content_tag :div, msg, :class => "alert alert-#{name}" %>
+<% end %>
+
+<%= yield %>
+
+</body>
+</html>

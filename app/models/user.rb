@@ -2,7 +2,7 @@ class User < ApplicationRecord
   has_secure_password
 
   validates_presence_of :email
-  validates_uniqueness_of :email, case_sensitive: false
+  validates_uniqueness_of :email, :username, case_sensitive: false
   validates_format_of :email, with: /@/
 
   before_save :downcase_email
@@ -34,18 +34,28 @@ class User < ApplicationRecord
   end
 
   def password_token_valid?
-    (self.reset_password_sent_at + 24.hours) > Time.now.utc
+    (self.reset_password_sent_at + 2.hours) > Time.now.utc
   end
 
-  def reset_password!(password)
-    self.reset_password_token = nil
-    self.password = password
-    save
+  def reset_password!(password, confirmation)
+    if self.update(password: password, password_confirmation: confirmation)
+      self.reset_password_token = nil
+      save
+    else
+      false
+    end
   end
 
   def update_new_email!(email)
     self.unconfirmed_email = email
     self.generate_confirmation_instructions
+    save
+  end
+
+  def confirm_new_email!
+    self.email = self.unconfirmed_email
+    self.unconfirmed_email = nil
+    self.mark_as_confirmed!
     save
   end
 
@@ -58,12 +68,6 @@ class User < ApplicationRecord
       waiting_for_confirmation = find_by("unconfirmed_email = ?", email)
       return waiting_for_confirmation.present? && waiting_for_confirmation.confirmation_token_valid?
     end
-  end
-
-  def update_new_email!
-    self.email = self.unconfirmed_email
-    self.unconfirmed_email = nil
-    self.mark_as_confirmed!
   end
 
   private

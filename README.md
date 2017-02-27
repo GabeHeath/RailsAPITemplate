@@ -5,6 +5,9 @@ Send `POST` to `/users` with this information:
 ```javascript
 {
   "user": {
+    "first_name": "FirstName",
+    "last_name": "LastName",
+    "username": "Username",
     "email": "test@example.com",
     "password": "anewpassword",
     "password_confirmation": "anewpassword"
@@ -14,15 +17,8 @@ Send `POST` to `/users` with this information:
 
 ### Confirm a User:
 
-Once a user is created they will recieve a token via email.
-
-Send the token via `POST` to `/users/confirm` like this:
-
-```javascript
-{
-  "token": { "TOKEN_HERE" }
-}
-```
+Once a user is created they will receive a token via email.
+All they have to do is click the link to activate their account.
 
 ### Login as a User:
 
