@@ -8,7 +8,7 @@ class UsersController < ApplicationController
       user.mark_as_confirmed!
       render json: {status: 'User confirmed successfully'}, status: :ok
     else
-      render json: {status: 'Invalid token'}, status: :not_found
+      render json: {errors: ['Invalid token']}, status: :bad_request
     end
   end
 
@@ -17,7 +17,7 @@ class UsersController < ApplicationController
     user = User.find_by(confirmation_token: token)
 
     if !user || !user.confirmation_token_valid?
-      render json: {errors: ['The email link seems to be invalid / expired. Try requesting for a new one.']}, status: :not_found
+      render json: {errors: ['The email link seems to be invalid / expired. Try requesting for a new one.']}, status: :bad_request
     else
       user.confirm_new_email!
       render json: {status: 'Email updated successfully'}, status: :ok

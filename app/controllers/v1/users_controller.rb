@@ -4,13 +4,17 @@ module V1
     before_action :validate_email_update, only: :update
 
     def create
-      user = User.new(user_params)
+      if user_params[:password] == user_params[:password_confirmation]
+        user = User.new(user_params)
 
-      if user.save
-        UserMailer.sign_up_confirmation(user).deliver_later
-        render json: {status: 'User created successfully'}, status: :created
+        if user.save
+          UserMailer.sign_up_confirmation(user).deliver_later
+          render json: {status: 'User created successfully'}, status: :created
+        else
+          render json: {errors: user.errors.full_messages}, status: :bad_request
+        end
       else
-        render json: {errors: user.errors.full_messages}, status: :bad_request
+        render json: {errors: ['Passwords do not match']}, status: :bad_request
       end
     end
 
@@ -33,16 +37,16 @@ module V1
     def update
       if @current_user.update_new_email!(@new_email)
         UserMailer.email_update_confirmation(@current_user).deliver_later
-        render json: {status: 'Email Confirmation has been sent to your new Email.'}, status: :ok
+        render json: {status: ['Email Confirmation has been sent to your new Email']}, status: :ok
       else
-        render json: {errors: current_user.errors.values.flatten.compact}, status: :bad_request
+        render json: {errors: @current_user.errors.full_messages}, status: :bad_request
       end
     end
 
     private
 
     def user_params
-      params.require(:user).permit(:first_name, :last_name, :username, :email, :password)
+      params.require(:user).permit(:first_name, :last_name, :username, :email, :password, :password_confirmation)
     end
 
     def validate_email_update
@@ -57,7 +61,7 @@ module V1
       end
 
       if User.email_used?(@new_email)
-        return render json: {errors: ['Email is already in use.']}, status: :unprocessable_entity
+        return render json: {errors: ['Email is already in use']}, status: :unprocessable_entity
       end
     end
   end

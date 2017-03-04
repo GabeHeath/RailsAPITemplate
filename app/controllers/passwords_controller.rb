@@ -13,7 +13,7 @@ class PasswordsController < ApplicationController
       PasswordMailer.forgot_password_confirmation(user).deliver_later
       render json: {status: 'ok'}, status: :ok
     else
-      render json: {errors: ['Email address not found. Please check and try again.']}, status: :not_found
+      render json: {errors: ['Email address not found. Please check and try again.']}, status: :unauthorized
     end
   end
 

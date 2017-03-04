@@ -4,21 +4,22 @@ class User < ApplicationRecord
   validates_presence_of :email
   validates_uniqueness_of :email, :username, case_sensitive: false
   validates_format_of :email, with: /@/
+  validates_format_of :unconfirmed_email, with: /@/, allow_nil: true
 
   before_save :downcase_email
-  before_create :generate_confirmation_instructions
+  before_create :generate_confirmation_token
 
   def downcase_email
     self.email = self.email.delete(' ').downcase
   end
 
-  def generate_confirmation_instructions
+  def generate_confirmation_token
     self.confirmation_token = generate_token
     self.confirmation_sent_at = Time.now.utc
   end
 
   def confirmation_token_valid?
-    (self.confirmation_sent_at + 30.days) > Time.now.utc
+    (self.confirmation_sent_at + 20.minutes) > Time.now.utc
   end
 
   def mark_as_confirmed!
@@ -34,7 +35,7 @@ class User < ApplicationRecord
   end
 
   def password_token_valid?
-    (self.reset_password_sent_at + 2.hours) > Time.now.utc
+    (self.reset_password_sent_at + 20.minutes) > Time.now.utc
   end
 
   def reset_password!(password, confirmation)
@@ -48,7 +49,7 @@ class User < ApplicationRecord
 
   def update_new_email!(email)
     self.unconfirmed_email = email
-    self.generate_confirmation_instructions
+    self.generate_confirmation_token
     save
   end
 
@@ -60,12 +61,12 @@ class User < ApplicationRecord
   end
 
   def self.email_used?(email)
-    existing_user = find_by("email = ?", email)
+    existing_user = find_by(email: email)
 
     if existing_user.present?
       return true
     else
-      waiting_for_confirmation = find_by("unconfirmed_email = ?", email)
+      waiting_for_confirmation = find_by(unconfirmed_email: email)
       return waiting_for_confirmation.present? && waiting_for_confirmation.confirmation_token_valid?
     end
   end
