@@ -35,6 +35,7 @@ group :development, :test do
   gem 'factory_girl_rails', :require => false
   gem 'shoulda'
   gem 'shoulda-callback-matchers'
+  gem 'simplecov', :require => false
 end
 
 group :development do
