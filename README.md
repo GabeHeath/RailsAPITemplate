@@ -22,7 +22,7 @@ All they have to do is click the link to activate their account.
 
 ### Login as a User:
 
-To log in send a `POST` to `/users/login` with this information:
+To log in send a `POST` to `/users/auth` with this information:
 
 ```javascript
 {

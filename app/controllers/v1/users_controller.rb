@@ -4,24 +4,31 @@ module V1
     before_action :validate_email_update, only: :update
 
     def create
-      if user_params[:password] == user_params[:password_confirmation]
-        user = User.new(user_params)
+      if user_params[:password].length < 8
+        return render json: {errors: ['Password must be at least 8 characters']}, status: :bad_request
+      end
 
-        if user.save
-          UserMailer.sign_up_confirmation(user).deliver_later
-          render json: {status: 'User created successfully'}, status: :created
-        else
-          render json: {errors: user.errors.full_messages}, status: :bad_request
-        end
+      unless user_params[:password] == user_params[:password_confirmation]
+        return render json: {errors: ['Passwords do not match']}, status: :bad_request
+      end
+
+      user = User.new(user_params)
+
+      if user.save
+        UserMailer.sign_up_confirmation(user).deliver_later
+        render json: {status: 'User created successfully'}, status: :created
       else
-        render json: {errors: ['Passwords do not match']}, status: :bad_request
+        render json: {errors: user.errors.full_messages}, status: :bad_request
       end
     end
 
-    def login
-      user = User.find_by(email: params[:email].to_s.downcase)
+    # Login
+    def auth
+      # [login, password]
+      login_credentials = ActionController::HttpAuthentication::Basic::user_name_and_password(request)
+      user = User.find_by(email: login_credentials[0].to_s.downcase)
 
-      if user && user.authenticate(params[:password])
+      if user && user.authenticate(login_credentials[1])
         if user.confirmed_at?
           auth_token = JsonWebToken.encode({user_id: user.id})
           render json: {auth_token: auth_token}, status: :ok

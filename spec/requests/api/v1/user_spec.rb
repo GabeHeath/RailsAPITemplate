@@ -119,7 +119,7 @@ RSpec.describe 'V1 User API', :type => :request do
         password: new_user.password,
       }.to_json
 
-    post '/users/login', params: params, headers: headers
+    post '/users/auth', params: params, headers: headers
     expect(response).to be_success
     expect(response.content_type).to eq('application/json')
     expect(response.body).to include('auth_token')
@@ -141,7 +141,7 @@ RSpec.describe 'V1 User API', :type => :request do
           password: new_user.password,
       }.to_json
 
-      expect { post '/users/login', params: params, headers: unversioned_headers }.to raise_error(ActionController::RoutingError)
+      expect { post '/users/auth', params: params, headers: unversioned_headers }.to raise_error(ActionController::RoutingError)
     end
 
     it 'should fail if password is incorrect and is case sensitive' do
@@ -158,7 +158,7 @@ RSpec.describe 'V1 User API', :type => :request do
           password: new_user.password.upcase,
       }.to_json
 
-      post '/users/login', params: params, headers: headers
+      post '/users/auth', params: params, headers: headers
       expect(response.status).to eq(401)
       expect(response.content_type).to eq('application/json')
       expect(response.body).to eq('{"errors":["Invalid username / password"]}')
