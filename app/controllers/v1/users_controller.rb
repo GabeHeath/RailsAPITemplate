@@ -22,7 +22,6 @@ module V1
       end
     end
 
-    # Login
     def auth
       # [login, password]
       login_credentials = ActionController::HttpAuthentication::Basic::user_name_and_password(request)
@@ -30,8 +29,9 @@ module V1
 
       if user && user.authenticate(login_credentials[1])
         if user.confirmed_at?
-          auth_token = JsonWebToken.encode({user_id: user.id})
-          render json: {auth_token: auth_token}, status: :ok
+          access_token = JsonWebToken.encode({user_id: user.id})
+          refresh_token = JsonWebToken.encode({user_id: user.id})
+          render json: {access_token: access_token}, status: :ok
         else
           UserMailer.sign_up_confirmation(user).deliver_later
           render json: {errors: ['Email not verified. Confirmation email has been resent.']}, status: :unauthorized

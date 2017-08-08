@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   has_secure_password
 
+  has_one :refresh_token
+
   validates_presence_of :email
   validates_uniqueness_of :email, :username, case_sensitive: false
   validates_format_of :email, with: /@/
