@@ -114,12 +114,13 @@ RSpec.describe 'V1 User API', :type => :request do
                         password_confirmation: password,
                         confirmed_at: Time.now
 
-      params = {
-        email: new_user.email,
-        password: new_user.password,
-      }.to_json
+      headers = {
+          'Content-Type' => 'application/json',
+          'accept' => 'version=1',
+          'Authorization' => ActionController::HttpAuthentication::Basic.encode_credentials(new_user.email, new_user.password)
+      }
 
-    post '/users/auth', params: params, headers: headers
+    post '/users/auth', headers: headers
     expect(response).to be_success
     expect(response.content_type).to eq('application/json')
     expect(response.body).to include('auth_token')
