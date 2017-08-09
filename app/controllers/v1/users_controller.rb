@@ -4,10 +4,6 @@ module V1
     before_action :validate_email_update, only: :update
 
     def create
-      if user_params[:password].length < 8
-        return render json: {errors: ['Password must be at least 8 characters']}, status: :bad_request
-      end
-
       unless user_params[:password] == user_params[:password_confirmation]
         return render json: {errors: ['Passwords do not match']}, status: :bad_request
       end
@@ -28,10 +24,15 @@ module V1
       user = User.find_by(email: login_credentials[0].to_s.downcase)
 
       if user && user.authenticate(login_credentials[1])
-        if user.confirmed_at?
-          access_token = JsonWebToken.encode({user_id: user.id})
-          refresh_token = JsonWebToken.encode({user_id: user.id})
-          render json: {access_token: access_token}, status: :ok
+        if user.confirmed_at? || user.confirmation_sent_at > 3.hours.ago # Give the user a grace period to confirm their email. This allows them to log in immediately after registering
+          access_token = JsonWebToken.encode({user_id: user.id}, 'access')
+          refresh_token = JsonWebToken.encode({user_id: user.id}, 'refresh')
+          render json: {
+                     tokens: {
+                         access: access_token,
+                         refresh: refresh_token
+                     }
+                 }, status: :ok
         else
           UserMailer.sign_up_confirmation(user).deliver_later
           render json: {errors: ['Email not verified. Confirmation email has been resent.']}, status: :unauthorized

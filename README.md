@@ -22,13 +22,10 @@ All they have to do is click the link to activate their account.
 
 ### Login as a User:
 
-To log in send a `POST` to `/users/auth` with this information:
+To log in send a `POST` to `/users/auth` with a Basic Authorization header. The encoding is a string with this format "email:password":
 
 ```javascript
-{
-  "email": "test@example.com",
-  "password": "anewpassword"
-}
+Authorization: Basic Z2xlbi5rZWxlckByb2RyaWd1ZXpyb2JlbC5pbmZvOlV5VnQ3clRjUA==
 ```
 
 If authentication succeeds you will receive a response with an auth token similar to this:

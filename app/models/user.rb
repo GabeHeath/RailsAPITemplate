@@ -7,6 +7,7 @@ class User < ApplicationRecord
   validates_uniqueness_of :email, :username, case_sensitive: false
   validates_format_of :email, with: /@/
   validates_format_of :unconfirmed_email, with: /@/, allow_nil: true
+  #TODO validate password only on create and password_update
 
   before_save :downcase_email
   before_create :generate_confirmation_token
