@@ -25,20 +25,43 @@ module V1
 
       if user && user.authenticate(login_credentials[1])
         if user.confirmed_at? || user.confirmation_sent_at > 3.hours.ago # Give the user a grace period to confirm their email. This allows them to log in immediately after registering
-          access_token = JsonWebToken.encode({user_id: user.id}, 'access')
-          refresh_token = JsonWebToken.encode({user_id: user.id}, 'refresh')
-          render json: {
-                     tokens: {
-                         access: access_token,
-                         refresh: refresh_token
-                     }
-                 }, status: :ok
+          refresh_token  = RefreshToken.new(user_id: user.id, value: JsonWebToken.encode({user_id: user.id}, 'refresh'))
+          if refresh_token.save
+            access_token = JsonWebToken.encode({user_id: user.id}, 'access')
+            render json: {
+                       tokens: {
+                           access: access_token,
+                           refresh: refresh_token.value
+                       }
+                   }, status: :ok
+            end
         else
           UserMailer.sign_up_confirmation(user).deliver_later
           render json: {errors: ['Email not verified. Confirmation email has been resent.']}, status: :unauthorized
         end
       else
         render json: {errors: ['Invalid username / password']}, status: :unauthorized
+      end
+    end
+
+    def refresh
+      token = token_params[:refresh]
+      begin
+        payload =  JsonWebToken.decode(token)[0]
+      rescue => error
+        return render json: {errors: [error]}, status: :unauthorized
+      end
+      if JsonWebToken.valid_payload(payload, 'refresh')
+        refresh_token = RefreshToken.refresh(token)
+        access_token = JsonWebToken.encode({user_id: refresh_token.user_id}, 'access')
+        render json: {
+            tokens: {
+                access: access_token,
+                refresh: refresh_token.value
+            }
+        }, status: :ok
+      else
+        render json: {errors: ['Invalid Request']}, status: :unauthorized
       end
     end
 
@@ -55,6 +78,10 @@ module V1
 
     def user_params
       params.require(:user).permit(:first_name, :last_name, :username, :email, :password, :password_confirmation)
+    end
+
+    def token_params
+      params.require(:token).permit(:refresh)
     end
 
     def validate_email_update

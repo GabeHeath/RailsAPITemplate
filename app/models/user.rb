@@ -11,6 +11,7 @@ class User < ApplicationRecord
 
   before_save :downcase_email
   before_create :generate_confirmation_token
+  after_create :create_refresh_token
 
   def downcase_email
     self.email = self.email.delete(' ').downcase
@@ -78,6 +79,10 @@ class User < ApplicationRecord
 
   def generate_token
     SecureRandom.hex(10)
+  end
+
+  def create_refresh_token
+    RefreshToken.create_refresh_token(self.id)
   end
 
 end

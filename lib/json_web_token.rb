@@ -26,7 +26,7 @@ class JsonWebToken
   # Default options to be encoded in the access token
   def self.access_token_data
     {
-      expire_at: 1.hour.from_now,
+      exp:  1.hour.from_now.to_i,
       expire_in: 3600, # 1 hour
       iss: 'issuer_name',
       aud: 'client',
@@ -36,16 +36,16 @@ class JsonWebToken
   # Default options to be encoded in the refresh token
   def self.refresh_token_data
     {
-        expire_at: 14.days.from_now,
+        exp:  14.days.from_now.to_i,
         expire_in: 1209600, #14 days
         iss: 'issuer_name',
         aud: 'client',
     }
   end
 
-  # Validates if the token is expired by expire_at parameter
+  # Validates if the token is expired by exp parameter
   def self.expired(payload)
-    Time.at(payload['expire_at']) < Time.now
+    Time.at(payload['exp']) < Time.now
   end
 
   def self.token_defaults(token_type)

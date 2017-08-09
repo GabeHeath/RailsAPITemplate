@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     resources :users, only: [:create] do
       collection do
         post 'auth'
+        post 'auth/refresh', to: 'users#refresh'
         patch 'email_update', to: 'users#update'
       end
     end
