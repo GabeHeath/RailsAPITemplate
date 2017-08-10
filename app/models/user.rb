@@ -1,20 +1,26 @@
+# frozen_string_literal: true
+
 class User < ApplicationRecord
   has_secure_password
 
   has_one :refresh_token, dependent: :destroy
 
   validates_presence_of :email
-  validates_uniqueness_of :email, :username, case_sensitive: false
+  validate :email_used?
   validates_format_of :email, with: /@/
   validates_format_of :unconfirmed_email, with: /@/, allow_nil: true
-  #TODO validate password only on create and password_update
+
+  validates_uniqueness_of :username, case_sensitive: false
+
+  validates :password, length: { in: 8..40 }, on: :create
+  validates_confirmation_of :password, on: :create
 
   before_save :downcase_email
   before_create :generate_confirmation_token
   after_create :create_refresh_token
 
   def downcase_email
-    self.email = self.email.delete(' ').downcase
+    self.email = email.delete(' ').downcase
   end
 
   def generate_confirmation_token
@@ -23,7 +29,7 @@ class User < ApplicationRecord
   end
 
   def confirmation_token_valid?
-    (self.confirmation_sent_at + 20.minutes) > Time.now.utc
+    (confirmation_sent_at + 20.minutes) > Time.now.utc
   end
 
   def mark_as_confirmed!
@@ -39,11 +45,11 @@ class User < ApplicationRecord
   end
 
   def password_token_valid?
-    (self.reset_password_sent_at + 20.minutes) > Time.now.utc
+    (reset_password_sent_at + 20.minutes) > Time.now.utc
   end
 
   def reset_password!(password, confirmation)
-    if self.update(password: password, password_confirmation: confirmation)
+    if update(password: password, password_confirmation: confirmation)
       self.reset_password_token = nil
       save
     else
@@ -53,26 +59,21 @@ class User < ApplicationRecord
 
   def update_new_email!(email)
     self.unconfirmed_email = email
-    self.generate_confirmation_token
+    generate_confirmation_token
     save
   end
 
   def confirm_new_email!
-    self.email = self.unconfirmed_email
+    self.email = unconfirmed_email
     self.unconfirmed_email = nil
-    self.mark_as_confirmed!
+    mark_as_confirmed!
     save
   end
 
-  def self.email_used?(email)
-    existing_user = find_by(email: email)
-
-    if existing_user.present?
-      return true
-    else
-      waiting_for_confirmation = find_by(unconfirmed_email: email)
-      return waiting_for_confirmation.present? && waiting_for_confirmation.confirmation_token_valid?
-    end
+  def email_used?
+    existing_user = User.find_by(email: email&.downcase)
+    waiting_for_confirmation = User.find_by(unconfirmed_email: email&.downcase)
+    errors.add(:email, 'has already been taken') if existing_user.present? || waiting_for_confirmation&.confirmation_token_valid?
   end
 
   private
@@ -82,7 +83,6 @@ class User < ApplicationRecord
   end
 
   def create_refresh_token
-    RefreshToken.create_refresh_token(self.id)
+    RefreshToken.create_refresh_token(id)
   end
-
 end

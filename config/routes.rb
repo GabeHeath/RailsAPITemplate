@@ -4,7 +4,8 @@ Rails.application.routes.draw do
       collection do
         post 'auth'
         post 'auth/refresh', to: 'users#refresh'
-        patch 'email_update', to: 'users#update'
+        post 'auth/revoke', to: 'users#revoke'
+        patch 'email/update', to: 'users#update_email'
       end
     end
 

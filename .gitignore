@@ -45,3 +45,5 @@ bower.json
 
 # Ignore SimpleCov coverage directory
 coverage
+
+.idea
