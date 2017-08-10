@@ -46,18 +46,12 @@ module V1
 
     def refresh
       token = token_params[:refresh]
-      begin
-        payload =  JsonWebToken.decode(token)[0]
-      rescue => error
-        return render json: {errors: [error]}, status: :unauthorized
-      end
-      if JsonWebToken.valid_payload(payload, 'refresh')
-        refresh_token = RefreshToken.refresh(token)
-        access_token = JsonWebToken.encode({user_id: refresh_token.user_id}, 'access')
+      refreshed_tokens = RefreshToken.validate_and_refresh(token)
+      if refreshed_tokens
         render json: {
             tokens: {
-                access: access_token,
-                refresh: refresh_token.value
+                access: refreshed_tokens[:access],
+                refresh: refreshed_tokens[:refresh]
             }
         }, status: :ok
       else

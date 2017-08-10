@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   has_secure_password
 
-  has_one :refresh_token
+  has_one :refresh_token, dependent: :destroy
 
   validates_presence_of :email
   validates_uniqueness_of :email, :username, case_sensitive: false

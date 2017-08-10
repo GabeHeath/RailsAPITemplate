@@ -26,8 +26,10 @@ class JsonWebToken
   # Default options to be encoded in the access token
   def self.access_token_data
     {
-      exp:  1.hour.from_now.to_i,
-      expire_in: 3600, # 1 hour
+      # exp:  1.hour.from_now.to_i,
+      exp: 6.minutes.from_now.to_i,
+      # expire_in: 3600, # 1 hour
+      expire_in: 360,
       iss: 'issuer_name',
       aud: 'client',
     }
@@ -36,8 +38,10 @@ class JsonWebToken
   # Default options to be encoded in the refresh token
   def self.refresh_token_data
     {
-        exp:  14.days.from_now.to_i,
-        expire_in: 1209600, #14 days
+        # exp:  14.days.from_now.to_i,
+        exp:  6.minutes.from_now.to_i,
+        # expire_in: 1209600, #14 days
+        expire_in: 360,
         iss: 'issuer_name',
         aud: 'client',
     }
