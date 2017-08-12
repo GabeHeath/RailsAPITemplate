@@ -4,7 +4,7 @@ module V1
 
     def update
       if @current_user && @current_user.authenticate(params[:current_password])
-        if !params[:password].present? || params[:password].length < 8
+        unless params[:password].present? || params[:password].length < 8
           render json: {errors: ['Password must be a minimum of 8 characters']}, status: :unprocessable_entity
           return
         end

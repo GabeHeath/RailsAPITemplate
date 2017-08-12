@@ -153,6 +153,7 @@ RSpec.describe User, type: :model do
     let(:long_pw_user)  { build :user, password: long_password, password_confirmation: long_password }
     let(:short_pw_user) { build :user, password: short_password, password_confirmation: short_password }
     let(:mismatching_pw_user) { build :user, password: valid_password_1, password_confirmation: valid_password_2 }
+    let(:nil_pw_user) { build :user, password: nil, password_confirmation: nil }
 
     it { should have_secure_password }
 
@@ -169,6 +170,76 @@ RSpec.describe User, type: :model do
     it 'is not valid when passwords mismatch' do
       expect(mismatching_pw_user).not_to be_valid
       expect(mismatching_pw_user.errors.messages[:password_confirmation]).to include('doesn\'t match Password')
+    end
+
+    it 'is not valid if passwords are nil' do
+      expect(nil_pw_user).not_to be_valid
+      expect(nil_pw_user.errors.messages[:password]).to include('can\'t be blank')
+    end
+
+    context 'token' do
+      it 'generates successfully' do
+        user
+        password_token = user.reset_password_token
+        user.generate_password_token!
+        expect(password_token).to be_nil
+        expect(user.reset_password_token).to_not be_nil
+      end
+
+      it 'sets resets_password_at' do
+        user
+        reset_password_sent_at = user.reset_password_sent_at
+        user.generate_password_token!
+        expect(reset_password_sent_at).to be_nil
+        expect(user.reset_password_sent_at.to_i).to eq(Time.now.utc.to_i)
+      end
+
+      it 'is valid if it\'s less than 20 minutes old' do
+        user.generate_password_token!
+        expect(user.password_token_valid?).to eq(true)
+      end
+
+      it 'is invalid if it\'s older than 20 minutes' do
+        user.generate_password_token!
+        user.reset_password_sent_at = 21.minutes.ago
+        expect(user.password_token_valid?).to eq(false)
+      end
+    end
+
+    context 'reset' do
+      let(:reset_password) { user.reset_password!(valid_password_1, valid_password_1) }
+      let(:bad_reset_password) { user.reset_password!(valid_password_1, valid_password_2) }
+      let(:long_reset_password) { user.reset_password!(long_password, long_password) }
+      let(:short_reset_password) { user.reset_password!(short_password, short_password) }
+      let(:nil_reset_password) { user.reset_password!(nil, nil) }
+
+      it 'updates the password' do
+        user
+        password_digest = user.password_digest
+        reset_password
+        expect(user.password_digest).not_to eq(password_digest)
+      end
+
+      it 'clears the reset_password_token' do
+        reset_password
+        expect(user.reset_password_token).to be_nil
+      end
+
+      it 'fails if password and password_confirmation do not match' do
+        expect(bad_reset_password).to be false
+      end
+
+      it 'fails if password exceeds 40 characters' do
+        expect(long_reset_password).to be false
+      end
+
+      it 'fails if password is shorter than 8 characters' do
+        expect(short_reset_password).to be false
+      end
+
+      it 'fails if password is shorter than 8 characters' do
+        expect(nil_reset_password).to be false
+      end
     end
   end
 end

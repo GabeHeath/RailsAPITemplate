@@ -9,11 +9,10 @@ class User < ApplicationRecord
   validates_format_of :email, with: /@/
   validates_format_of :unconfirmed_email, with: /@/, allow_nil: true
 
-  validates_presence_of :username
   validates_uniqueness_of :email, :username, case_sensitive: false
+  validates_presence_of :username
 
-  validates :password, length: { in: 8..40 }, on: :create
-  validates_confirmation_of :password, on: :create
+  validates :password, length: { in: 8..40 }
 
   before_save :downcase_email
   before_create :generate_confirmation_token
