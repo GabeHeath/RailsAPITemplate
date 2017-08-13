@@ -38,9 +38,10 @@ class User < ApplicationRecord
   end
 
   def generate_password_token!
-    self.reset_password_token = generate_token
-    self.reset_password_sent_at = Time.now.utc
-    save!
+    self.update_attributes(
+        reset_password_token: generate_token,
+        reset_password_sent_at: Time.now.utc
+    )
   end
 
   def password_token_valid?

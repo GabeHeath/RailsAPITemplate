@@ -5,9 +5,9 @@ RSpec.describe 'Password API', :type => :request do
   headers = { 'Content-Type' => 'application/json' }
 
   describe 'forgot password' do
-    it 'should return as a success' do
-      existing_user = create :user
+    let(:existing_user) { create :user }
 
+    it 'should return as a success' do
       params = { email: existing_user.email }.to_json
 
       patch '/password/forgot', params: params, headers: headers
