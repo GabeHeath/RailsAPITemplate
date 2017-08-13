@@ -89,6 +89,6 @@ class User < ApplicationRecord
   end
 
   def create_refresh_token
-    RefreshToken.create_refresh_token(id)
+    RefreshToken.create(user_id: id)
   end
 end

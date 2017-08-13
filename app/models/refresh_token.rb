@@ -4,6 +4,13 @@ require 'json_web_token'
 class RefreshToken < ApplicationRecord
   belongs_to :user
 
+  before_validation :set_token_value, on: :create
+  validates_presence_of :value
+
+  def set_token_value
+    self.value = JsonWebToken.encode({ user_id: self.user_id }, 'refresh')
+  end
+
   def self.revoke(token)
     token = find_by_value(token)
     return nil unless token
@@ -14,27 +21,22 @@ class RefreshToken < ApplicationRecord
     begin
       payload = JsonWebToken.decode(token)[0]
     rescue => error
-      puts error
-      old_token = find_by_value(token)
-      old_token&.destroy
+      logger.error error
+      revoke(token)
       return nil
     end
 
-    return nil unless payload && find_by_value(token) && JsonWebToken.valid_payload(payload, 'refresh')
     user_id = payload['user_id']
-    refresh_token = refresh(user_id)
-    access_token = JsonWebToken.encode({ user_id: user_id }, 'access')
 
-    return nil unless refresh_token || access_token
-    { refresh: refresh_token.value, access: access_token }
-  end
+    if payload && find_by_value(token) && JsonWebToken.valid_payload(payload, 'refresh')
+      refresh_token = refresh(user_id)
+      access_token = JsonWebToken.encode({user_id: user_id}, 'access')
+      return { refresh: refresh_token.value, access: access_token } if refresh_token && access_token
+    else
+      destroy_old_token(user_id)
+    end
 
-  def self.create_refresh_token(user_id)
-    private
-    create(
-      user_id: user_id,
-      value: JsonWebToken.encode({ user_id: user_id }, 'refresh')
-    )
+    nil
   end
 
   def self.destroy_old_token(user_id)
@@ -45,7 +47,6 @@ class RefreshToken < ApplicationRecord
 
   def self.refresh(user_id)
     private
-    destroy_old_token(user_id)
-    create_refresh_token(user_id)
+    RefreshToken.create(user_id: user_id) if destroy_old_token(user_id)
   end
 end
